@@ -1,0 +1,104 @@
+```cpp
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include "esp_camera.h"
+#include "WiFiClient.h"
+
+// Define Blynk Auth Token
+char auth[] = "YOUR_BLYNK_AUTH_TOKEN";
+
+// WiFi Credentials
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASSWORD";
+
+// Define camera configuration
+camera_config_t config;
+
+// GPIO for button and relay
+#define BUTTON_PIN  12   // Adjust according to your wiring
+#define RELAY_PIN   13   // Adjust according to your wiring
+
+// Face recognition data (replace with your face recognition function)
+bool recognizeFace() {
+    // Your face recognition logic goes here
+    return true; // For demonstration, we return true
+}
+
+// Blynk notification function
+void notify() {
+    Blynk.notify("Someone is at the door!");
+}
+
+// Button press handler
+void buttonPressed() {
+    notify();
+    // Optional: Add a delay before the next action
+}
+
+// Blynk virtual pin for streaming
+BlynkTimer timer;
+
+// Stream live view
+void stream() {
+    // Code to handle live streaming
+    // You can implement an HTTP server to serve the camera feed
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    // Setup button and relay pins
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW); // Lock is initially closed
+
+    // Initialize camera
+    config.ledc_channel = LEDC_CHANNEL;
+    config.ledc_timer = LEDC_TIMER;
+    config.pin_d0 = 0; // Adjust according to your wiring
+    config.pin_d1 = 1; // Adjust according to your wiring
+    config.pin_d2 = 2; // Adjust according to your wiring
+    config.pin_d3 = 3; // Adjust according to your wiring
+    config.pin_d4 = 4; // Adjust according to your wiring
+    config.pin_d5 = 5; // Adjust according to your wiring
+    config.pin_d6 = 6; // Adjust according to your wiring
+    config.pin_d7 = 7; // Adjust according to your wiring
+    config.pin_xclk = 21; // Adjust according to your wiring
+    config.pin_pclk = 22; // Adjust according to your wiring
+    config.pin_vsync = 25; // Adjust according to your wiring
+    config.pin_href = 23; // Adjust according to your wiring
+    config.pin_sccb_sda = 26; // Adjust according to your wiring
+    config.pin_sccb_scl = 27; // Adjust according to your wiring
+    config.pin_pwdn = 32; // Adjust according to your wiring
+    config.pin_reset = -1; // Not used
+    config.xclk_freq_hz = 20000000; // Set to 20 MHz
+    config.pixel_format = PIXFORMAT_JPEG; // Image format
+
+    // Initialize camera
+    if (esp_camera_init(&config) != ESP_OK) {
+        Serial.println("Camera init failed");
+        return;
+    }
+
+    // Connect to WiFi
+    Blynk.begin(auth, ssid, password);
+
+    // Button press event
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonPressed, FALLING);
+
+    // Timer for streaming
+    timer.setInterval(1000L, stream); // Adjust interval as needed
+}
+
+void loop() {
+    Blynk.run();
+    timer.run();
+
+    // Check for face recognition
+    if (recognizeFace()) {
+        digitalWrite(RELAY_PIN, HIGH); // Open lock
+        delay(5000); // Keep lock open for 5 seconds
+        digitalWrite(RELAY_PIN, LOW); // Close lock
+    }
+}
+```
